@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 
 @Repository
 public class CustomerDAOImpl implements CustomerDAO {
@@ -69,5 +70,32 @@ public class CustomerDAOImpl implements CustomerDAO {
         theQuery.setParameter("customerId", theId);
 
         theQuery.executeUpdate();
+    }
+
+    @Override
+    public List<Customer> searchCustomers(String theSearchName) {
+
+        // get the current hibernate session
+        Session currentSession = sessionFactory.getCurrentSession();
+
+        Query theQuery = null;
+
+        // only search by name if theSearchName is not empty
+
+        if(theSearchName != null && theSearchName.trim().length() > 0) {
+            // search for firstName or lastName
+            theQuery = currentSession.createQuery("FROM Customer WHERE " +
+                    "lower(firstName) LIKE :theName or lower(lastName) LIKE  :theName", Customer.class);
+            theQuery.setParameter("theName","%" + theSearchName.toLowerCase() + "%");
+        }else {
+            //theSearchName is empty, so just get all customers
+            theQuery = currentSession.createQuery("FROM Customer", Customer.class);
+        }
+
+        // execute query and get result list
+        List<Customer> customers = theQuery.getResultList();
+
+        // return the results
+        return customers;
     }
 }
